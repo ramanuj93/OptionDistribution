@@ -1,14 +1,7 @@
-from py_vollib.black_scholes.greeks.analytical import theta
-from py_vollib.black_scholes.greeks.analytical import delta
-from py_vollib.black_scholes.greeks.analytical import gamma
-from py_vollib.black_scholes.greeks.analytical import vega
-import py_vollib.black_scholes as option_price
 import numpy as np
 import timeit
 import matplotlib.pyplot as plt
 from numba import vectorize, float64, guvectorize
-from math import fabs, erf, erfc, exp, log, pow, sqrt
-from scipy.special import ndtr
 from numba_stats import norm
 
 from utils.helpers import normal_dist, black_scholes_d1, black_scholes_d2, pdf
@@ -17,7 +10,7 @@ from utils.helpers import normal_dist, black_scholes_d1, black_scholes_d2, pdf
 class BlackScholes:
 
     @staticmethod
-    @guvectorize([(float64[:], float64[:], float64[:], float64[:], float64[:], float64[:], float64[:,:])], '(m),(n),(n),(n),(n),(n)->(n,m)', target='cpu')
+    @guvectorize([(float64[:], float64[:], float64[:], float64[:], float64[:], float64[:], float64[:,:])], '(m),(n),(n),(n),(n),(n)->(n,m)', target='parallel')
     def _get_greeks_call(g_types, S, K, t, r, stdiv, result):
         d1 = black_scholes_d1(S, K, t, r, stdiv)
         d2 = black_scholes_d2(d1, t, stdiv)
@@ -37,7 +30,7 @@ class BlackScholes:
             result[i][3] = theta[i]*100.0
 
     @staticmethod
-    @guvectorize([(float64[:], float64[:], float64[:], float64[:], float64[:], float64[:], float64[:,:])], '(m),(n),(n),(n),(n),(n)->(n,m)', target='cpu')
+    @guvectorize([(float64[:], float64[:], float64[:], float64[:], float64[:], float64[:], float64[:,:])], '(m),(n),(n),(n),(n),(n)->(n,m)', target='parallel')
     def _get_greeks_put(g_types, S, K, t, r, stdiv, result):
         d1 = black_scholes_d1(S, K, t, r, stdiv)
         d2 = black_scholes_d2(d1, t, stdiv)
@@ -95,17 +88,25 @@ class IronCondor:
         self.long_call.tte = self.short_call.tte = self.long_put.tte = self.short_put.tte = tte
 
 
-size = 1
-S = np.ones(size)*108.38
-K = np.ones(size)*85
-stdiv = np.ones(size)*0.44
-times = np.ones(size)*146/365.25
+S = np.linspace(85, 120, 36)#  *108.38
+size = S.shape[0]
+K = np.ones(size)*130
+stdiv1 = np.ones(size)*0.325
+stdiv2 = np.ones(size)*0.375
+times = np.ones(size)*90/365.25
 rates = np.ones(size)*0.03015
 flag = 'c'
 start = timeit.default_timer()
-xx = BlackScholes.get_greeks_put(S, K, times, rates, stdiv)
+option_data1 = BlackScholes.get_greeks_call(S, K, times, rates, stdiv1)
+option_data2 = BlackScholes.get_greeks_call(S, K, times, rates, stdiv2)
 print(f'time -> {(timeit.default_timer()-start)*1000}')
-print(xx[0])
+# print(option_data[0])
+
+plt.plot(S, -1*option_data1[:, 0], color='r')
+plt.plot(S, -1*option_data2[:, 0], color='g')
+plt.show()
+
+
 
 
 
