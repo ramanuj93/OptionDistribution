@@ -88,10 +88,10 @@ if __name__ == '__main__':
     # get30daydance("AAPL")
     # print(uniq)
     # datas = get30daydelta("GOOG")
-    ticker_data = readStock("AAPL")
+    ticker_data = readStock("TLT")
     price_info = ticker_data[-3000:, 4]
-    hts = Ticker(price_info, 5)
-    long_x, near_x = hts.calc_probability(0.04)
+    hts = Ticker(price_info, 20)
+    long_x, near_x = hts.calc_probability(0.05)
     print(long_x.high)
 
     datas_close = [long_x.close, near_x.close]

@@ -28,7 +28,7 @@ class Ticker:
         self._total = None
         self.calculate_basic_stats(period=period)
         self._distribution_full = self.__calculate_distribution()
-        self._distribution_short = self.__calculate_distribution(400)
+        self._distribution_short = self.__calculate_distribution(600)
 
     def calculate_basic_stats(self, period):
         working_data = self._range_data

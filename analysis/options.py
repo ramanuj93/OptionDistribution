@@ -50,14 +50,75 @@ class BlackScholes:
 
     @staticmethod
     def get_greeks_call(S, K, t, r, stdiv):
+        """
+        Returns price and greeks for call option(s)
+                Parameters:
+                        S: Price(s) of Underlying
+                        K: Strike Price(s)
+                        t: Time(s) to Expiry in Days
+                        r: Risk Free Rate(s)
+                        stdiv: Standard Deviation(s)
+
+                Returns:
+                        Price And Greeks: Price, Delta, Gamma, Theta
+        """
         g_types = np.ones(4)
-        return BlackScholes._get_greeks_call(g_types, S, K, t, r, stdiv)
+        arr_len = 1
+
+        if type(S) is np.ndarray:
+            arr_len = S.shape[0]
+        elif type(K) is np.ndarray:
+            arr_len = K.shape[0]
+        elif type(t) is np.ndarray:
+            arr_len = t.shape[0]
+        elif type(r) is np.ndarray:
+            arr_len = r.shape[0]
+        elif type(stdiv) is np.ndarray:
+            arr_len = stdiv.shape[0]
+
+        underlying_prices = np.ones(arr_len)*S
+        strike_prices = np.ones(arr_len)*K
+        tte = np.ones(arr_len)*(t/365.25)
+        rates = np.ones(arr_len)*r
+        st_divs = np.ones(arr_len)*stdiv
+
+        return BlackScholes._get_greeks_call(g_types, underlying_prices, strike_prices, tte, rates, st_divs)
 
     @staticmethod
     def get_greeks_put(S, K, t, r, stdiv):
-        g_types = np.ones(4)
-        return BlackScholes._get_greeks_put(g_types, S, K, t, r, stdiv)
+        """
+        Returns price and greeks for put option(s)
+                Parameters:
+                        S: Price(s) of Underlying
+                        K: Strike Price(s)
+                        t: Time(s) to Expiry in Days
+                        r: Risk Free Rate(s)
+                        stdiv: Standard Deviation(s)
 
+                Returns:
+                        Price And Greeks: Price, Delta, Gamma, Theta
+        """
+        g_types = np.ones(4)
+        arr_len = 1
+
+        if type(S) is np.ndarray:
+            arr_len = S.shape[0]
+        elif type(K) is np.ndarray:
+            arr_len = K.shape[0]
+        elif type(t) is np.ndarray:
+            arr_len = t.shape[0]
+        elif type(r) is np.ndarray:
+            arr_len = r.shape[0]
+        elif type(stdiv) is np.ndarray:
+            arr_len = stdiv.shape[0]
+
+        underlying_prices = np.ones(arr_len) * S
+        strike_prices = np.ones(arr_len) * K
+        tte = np.ones(arr_len) * (t / 365.25)
+        rates = np.ones(arr_len) * r
+        st_divs = np.ones(arr_len) * stdiv
+
+        return BlackScholes._get_greeks_put(g_types, underlying_prices, strike_prices, tte, rates, st_divs)
 
 
 class Optionleg:
@@ -90,11 +151,11 @@ class IronCondor:
 
 S = np.linspace(85, 120, 36)#  *108.38
 size = S.shape[0]
-K = np.ones(size)*130
-stdiv1 = np.ones(size)*0.325
-stdiv2 = np.ones(size)*0.375
-times = np.ones(size)*90/365.25
-rates = np.ones(size)*0.03015
+K = 130
+stdiv1 = 0.325
+stdiv2 = 0.375
+times = 90
+rates = 0.03015
 flag = 'c'
 start = timeit.default_timer()
 option_data1 = BlackScholes.get_greeks_call(S, K, times, rates, stdiv1)
