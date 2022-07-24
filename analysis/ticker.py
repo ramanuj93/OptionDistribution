@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot
-
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 class Distribution:
     def __init__(self):
@@ -25,19 +26,19 @@ class Ticker:
         self._min_data_delta = None
         self._max_data_delta = None
         self._total = None
-        self.calculate_basic_stats(period=5)
+        self.calculate_basic_stats(period=period)
         self._distribution_full = self.__calculate_distribution()
         self._distribution_short = self.__calculate_distribution(400)
 
     def calculate_basic_stats(self, period):
         working_data = self._range_data
-        open_data = working_data[:-period, -1]
-        self._close_data_delta = working_data[period:, -1]
+        open_data = working_data[:-period]
+        self._close_data_delta = working_data[period:]
 
-        min_data = np.lib.stride_tricks.sliding_window_view(working_data[1:, 1], window_shape=period)
+        min_data = np.lib.stride_tricks.sliding_window_view(working_data[1:], window_shape=period)
         self._min_data_delta = (np.min(min_data, axis=1) - open_data) / open_data
 
-        max_data = np.lib.stride_tricks.sliding_window_view(working_data[1:, 0], window_shape=period)
+        max_data = np.lib.stride_tricks.sliding_window_view(working_data[1:], window_shape=period)
         self._max_data_delta = (np.max(max_data, axis=1) - open_data) / open_data
 
         self._close_data_delta = (self._close_data_delta - open_data) / open_data
@@ -46,7 +47,6 @@ class Ticker:
 
     def __calculate_distribution(self, sample_size=0):
         bin_count = 40
-
         distribution = Distribution()
         distribution.total = sample_size or self._total
         distribution.low_dist = np.histogram(self._min_data_delta[-1*sample_size:], bin_count)
@@ -67,9 +67,9 @@ class Ticker:
             high = np.nonzero(distribution.high_dist[1] <= delta)
 
         dps = DeltaProbabilityStats()
-        dps.high = np.sum(high)/distribution.total
-        dps.low = np.sum(low)/distribution.total
-        dps.close = np.sum(close)/distribution.total
+        dps.high = np.sum(distribution.close_dist[0][high])/distribution.total
+        dps.low = np.sum(distribution.close_dist[0][low])/distribution.total
+        dps.close = np.sum(distribution.close_dist[0][close])/distribution.total
         return dps
 
     def calc_probability(self, delta):

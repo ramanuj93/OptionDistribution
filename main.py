@@ -88,11 +88,22 @@ if __name__ == '__main__':
     # get30daydance("AAPL")
     # print(uniq)
     # datas = get30daydelta("GOOG")
-    ticker_data = readStock("MSFT")
-    price_info = ticker_data[3000:, [1, 2, 3]]
+    ticker_data = readStock("AAPL")
+    price_info = ticker_data[-3000:, 4]
     hts = Ticker(price_info, 5)
-    x = hts.calc_probability(0.09)
-    print("A")
+    long_x, near_x = hts.calc_probability(0.04)
+    print(long_x.high)
+
+    datas_close = [long_x.close, near_x.close]
+    datas_high = [long_x.high, near_x.high]
+    datas_low = [long_x.low, near_x.low]
+    pyplot.bar([0, 0.5], datas_high, 0.1, color='r', label='High', edgecolor='gray')
+    pyplot.bar([0.1, 0.6], datas_close, 0.1, color='b', label='Close', edgecolor='gray')
+    pyplot.bar([0.2, 0.7], datas_low, 0.1, color='g', label='Low', edgecolor='gray')
+    pyplot.xticks([r/2 + 0.075 for r in range(2)],
+               ['Long', 'Near'])
+    pyplot.legend()
+    pyplot.show()
 
 
 
