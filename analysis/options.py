@@ -17,34 +17,54 @@ from utils.helpers import normal_dist, black_scholes_d1, black_scholes_d2, pdf
 class BlackScholes:
 
     @staticmethod
-    @guvectorize([(float64[:], float64[:], float64[:], float64[:], float64[:], float64[:], float64[:,:])], '(m),(n),(n),(n),(n),(n)->(n,m)')
-    def get_greeks_call(g_types, S, K, t, r, stdiv, result):
+    @guvectorize([(float64[:], float64[:], float64[:], float64[:], float64[:], float64[:], float64[:,:])], '(m),(n),(n),(n),(n),(n)->(n,m)', target='cpu')
+    def _get_greeks_call(g_types, S, K, t, r, stdiv, result):
         d1 = black_scholes_d1(S, K, t, r, stdiv)
         d2 = black_scholes_d2(d1, t, stdiv)
+        exp_ert = np.exp(-1*r*t)
+        np_sqrt_t = np.sqrt(t)
         pdf_d1 = norm._pdf(d1, 0, 1)
+        cdf_d1 = norm._cdf(d1, 0, 1)
         cdf_d2 = norm._cdf(d2, 0, 1)
-        delta = norm._cdf(d1, 0, 1)
-        gamma = (1/(S*stdiv*np.sqrt(t)))*pdf_d1
-        theta = (1/365.25)*(((-1)*(S*stdiv*pdf_d1/(2*np.sqrt(t))))-(r*K*np.exp(-1*r*t)*cdf_d2))
+        price = (S*cdf_d1)-(K*exp_ert*cdf_d2)
+        delta = cdf_d1  # calculation of delta
+        gamma = (1/(S*stdiv*np_sqrt_t))*pdf_d1  # calculation of gamma
+        theta = (1/365.25)*(((-1)*(S*stdiv*pdf_d1/(2*np_sqrt_t))) - (r*K*exp_ert*cdf_d2))  # calculation of theta
         for i in range(S.shape[0]):
-            result[i][0] = delta[i]
-            result[i][1] = gamma[i]
-            result[i][2] = theta[i]
+            result[i][0] = price[i]*100.0
+            result[i][1] = delta[i]*100.0
+            result[i][2] = gamma[i]*100.0
+            result[i][3] = theta[i]*100.0
 
     @staticmethod
-    @vectorize([float64(float64, float64, float64, float64, float64)])
-    def call_delta(S, K, t, r, stdiv):
-        return normal_dist(black_scholes_d1(S, K, t, r, stdiv))
+    @guvectorize([(float64[:], float64[:], float64[:], float64[:], float64[:], float64[:], float64[:,:])], '(m),(n),(n),(n),(n),(n)->(n,m)', target='cpu')
+    def _get_greeks_put(g_types, S, K, t, r, stdiv, result):
+        d1 = black_scholes_d1(S, K, t, r, stdiv)
+        d2 = black_scholes_d2(d1, t, stdiv)
+        exp_ert = np.exp(-1*r*t)
+        np_sqrt_t = np.sqrt(t)
+        pdf_d1 = norm._pdf(d1, 0, 1)
+        cdf_d1 = norm._cdf(d1, 0, 1)
+        price = (K*exp_ert*norm._cdf(-1*d2, 0, 1))-(S*norm._cdf(-1*d1, 0, 1))
+        delta = cdf_d1 - 1  # calculation of delta
+        gamma = (1/(S*stdiv*np_sqrt_t))*pdf_d1  # calculation of gamma
+        theta = (1/365.25)*(((-1)*(S*stdiv*pdf_d1/(2*np_sqrt_t))) + (r*K*exp_ert*norm._cdf(-1*d2, 0, 1)))  # calculation of theta
+        for i in range(S.shape[0]):
+            result[i][0] = price[i]*100.0
+            result[i][1] = delta[i]*100.0
+            result[i][2] = gamma[i]*100.0
+            result[i][3] = theta[i]*100.0
 
     @staticmethod
-    @vectorize([float64(float64, float64, float64, float64, float64)])
-    def put_delta(S, K, t, r, stdiv):
-        return normal_dist(black_scholes_d1(S, K, t, r, stdiv)) - 1
+    def get_greeks_call(S, K, t, r, stdiv):
+        g_types = np.ones(4)
+        return BlackScholes._get_greeks_call(g_types, S, K, t, r, stdiv)
 
-    # @staticmethod
-    # @vectorize([float64(float64, float64, float64, float64, float64)])
-    # def get_gamma(S, d1, t, stdiv):
-    #     return (1/(S*stdiv*sqrt(t)))*pdf(d1)
+    @staticmethod
+    def get_greeks_put(S, K, t, r, stdiv):
+        g_types = np.ones(4)
+        return BlackScholes._get_greeks_put(g_types, S, K, t, r, stdiv)
+
 
 
 class Optionleg:
@@ -75,16 +95,17 @@ class IronCondor:
         self.long_call.tte = self.short_call.tte = self.long_put.tte = self.short_put.tte = tte
 
 
-S = np.ones(1)*260.28
-K = np.ones(1)*300
-stdiv = np.ones(1)*0.3
-times = np.ones(1)*146/365.25
-rates = np.ones(1)*0.03015
+size = 1
+S = np.ones(size)*108.38
+K = np.ones(size)*85
+stdiv = np.ones(size)*0.44
+times = np.ones(size)*146/365.25
+rates = np.ones(size)*0.03015
 flag = 'c'
 start = timeit.default_timer()
-xx = BlackScholes.get_greeks_call(np.ones(3), S, K, times, rates, stdiv)
+xx = BlackScholes.get_greeks_put(S, K, times, rates, stdiv)
 print(f'time -> {(timeit.default_timer()-start)*1000}')
-print(xx)
+print(xx[0])
 
 
 
