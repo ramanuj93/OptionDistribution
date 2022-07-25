@@ -3,9 +3,10 @@ from math import  sqrt, exp
 import numpy as np
 from utils.helpers import normal_dist, black_scholes_d1, black_scholes_d2, pdf
 
+
 class BlackScholes:
     @staticmethod
-    @guvectorize([(float64[:], float64[:], float64, float64[:], float64[:], float64[:], float64[:, :, :, :, :])], '(m),(s),(),(t),(r),(v)->(s,t,r,v,m)', target='parallel', fastmath=True)
+    @guvectorize([(float64[:], float64[:], float64, float64[:], float64[:], float64[:], float64[:, :, :, :, :])], '(m),(s),(),(t),(r),(v)->(s,t,r,v,m)', target='parallel')
     def _get_greeks_call(g_types, S, K, tte, rates, stdiv, result):
         for r in range(rates.shape[0]):
             for t in range(tte.shape[0]):
@@ -32,9 +33,8 @@ class BlackScholes:
                         result[s][t][r][v][2] = gamma * 100.0
                         result[s][t][r][v][3] = theta * 100.0
 
-
     @staticmethod
-    @guvectorize([(float64[:], float64[:], float64, float64[:], float64[:], float64[:], float64[:, :, :, :, :])], '(m),(s),(),(t),(r),(v)->(s,t,r,v,m)', target='parallel', fastmath=True)
+    @guvectorize([(float64[:], float64[:], float64, float64[:], float64[:], float64[:], float64[:, :, :, :, :])], '(m),(s),(),(t),(r),(v)->(s,t,r,v,m)', target='parallel')
     def _get_greeks_put(g_types, S, K, tte, rates, stdiv, result):
         for r in range(rates.shape[0]):
             for t in range(tte.shape[0]):

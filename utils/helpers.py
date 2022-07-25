@@ -32,7 +32,7 @@ def pdf(d1):
     return (1/sqrt(2*pi))*exp(-1*pow(d1, 2)/2)
 
 
-@vectorize([float64(float64, float64, float64, float64, float64)], fastmath=True, target='cpu')
+@vectorize([float64(float64, float64, float64, float64, float64)], target='cpu')
 def black_scholes_d1(S, K, t, r, stdiv):
     return (log(S/K) + t*(r + (pow(stdiv, 2)/2)))/(stdiv*sqrt(t))
 
