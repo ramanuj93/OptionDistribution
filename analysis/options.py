@@ -137,14 +137,30 @@ class BlackScholes:
 
 class Optionleg:
     def __init__(self, K, type, tte, cb):
-        self.cost_basis = None
+        self.cost_basis = cb
         self.is_closed = False
-        self.K = None
-        self.type = None
-        self.tte = None
+        self.K = K
+        self.type = type
+        self.tte = tte
+        self.price = None
         self.delta = None
         self.gamma = None
         self.theta = None
+
+    def calculate_domain(self, curr_S, rf_rate, stdiv):
+        if self.type == 'c':
+            K = self.K
+            S = np.concatenate((np.ones(1)*curr_S, np.linspace(curr_S*0.7, curr_S*1.3, 61)))
+            t = np.linspace(self.tte, 1, self.tte)
+            r = rf_rate
+            v = np.concatenate((np.ones(1)*stdiv, np.linspace(max(0, stdiv - 0.1), stdiv + 0.1, 6)))
+
+            results = BlackScholes.get_greeks_call(S, K, t, r, v)
+            self.price = results[0, 0, 0, 0, 0]
+            self.delta = results[0, 0, 0, 0, 1]
+            self.gamma = results[0, 0, 0, 0, 2]
+            self.theta = results[0, 0, 0, 0, 3]
+            print("")
 
 
 
@@ -174,11 +190,13 @@ stdiv2 = 0.375
 times = 89
 rates2 = 0.03015
 start = timeit.default_timer()
+leg = Optionleg(130, 'c', 89, 1.0)
+leg.calculate_domain(108.38, 0.03015, 0.35)
 
-option_data1 = BlackScholes.get_greeks_call(S, K, times, rates2, stdiv1)
+# option_data1 = BlackScholes.get_greeks_call(S, K, times, rates2, stdiv1)
 # option_data2 = BlackScholes.get_greeks_call(S, K, times, rates, stdiv2)
 print(f'time -> {(timeit.default_timer()-start)*1000}')
-print(option_data1[0,0,0,0])
+# print(option_data1[0,0,0,0])
 
 # plt.plot(times, option_data1[:,:,:,:, -1], color='r')
 # plt.plot(times, option_data2[:, -1], color='g')
