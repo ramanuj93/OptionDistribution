@@ -2,9 +2,12 @@
 
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from analysis.options import IronCondor
 from analysis.ticker import Ticker
 from ibkrInit import IbkrApp
 import numpy as np
+
+
 from matplotlib import pyplot
 
 data_bins = np.linspace(-0.5, 0.5, 21)
@@ -88,22 +91,29 @@ if __name__ == '__main__':
     # get30daydance("AAPL")
     # print(uniq)
     # datas = get30daydelta("GOOG")
-    ticker_data = readStock("TLT")
+    ticker_data = readStock("AMZN")
     price_info = ticker_data[-3000:, 4]
-    hts = Ticker(price_info, 20)
-    long_x, near_x = hts.calc_probability(0.05)
-    print(long_x.high)
 
-    datas_close = [long_x.close, near_x.close]
-    datas_high = [long_x.high, near_x.high]
-    datas_low = [long_x.low, near_x.low]
-    pyplot.bar([0, 0.5], datas_high, 0.1, color='r', label='High', edgecolor='gray')
-    pyplot.bar([0.1, 0.6], datas_close, 0.1, color='b', label='Close', edgecolor='gray')
-    pyplot.bar([0.2, 0.7], datas_low, 0.1, color='g', label='Low', edgecolor='gray')
-    pyplot.xticks([r/2 + 0.075 for r in range(2)],
-               ['Long', 'Near'])
-    pyplot.legend()
-    pyplot.show()
+    icondor = IronCondor(115.0, 123.0, 125.0, 133.0, 4.22, 7.14, 7.86, 4.43, 53)
+    icondor.calculate_domain(121.14, 0.03, 0.42)
+    icondor.get_breakevens()
+
+    # hts = Ticker(price_info, 20)
+
+    # fff = hts.calculate_envelopes()
+    # long_x, near_x = hts.calc_probability(0.05)
+    # print(long_x.high)
+    #
+    # datas_close = [long_x.close, near_x.close]
+    # datas_high = [long_x.high, near_x.high]
+    # datas_low = [long_x.low, near_x.low]
+    # pyplot.bar([0, 0.5], datas_high, 0.1, color='r', label='High', edgecolor='gray')
+    # pyplot.bar([0.1, 0.6], datas_close, 0.1, color='b', label='Close', edgecolor='gray')
+    # pyplot.bar([0.2, 0.7], datas_low, 0.1, color='g', label='Low', edgecolor='gray')
+    # pyplot.xticks([r/2 + 0.075 for r in range(2)],
+    #            ['Long', 'Near'])
+    # pyplot.legend()
+    # pyplot.show()
 
 
 

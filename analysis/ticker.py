@@ -1,7 +1,10 @@
 import numpy as np
 from matplotlib import pyplot
+from numba.experimental import jitclass
+from numba import njit
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
 
 class Distribution:
     def __init__(self):
@@ -27,6 +30,7 @@ class Ticker:
         self._max_data_delta = None
         self._total = None
         self.calculate_basic_stats(period=period)
+        self._envelope = None
         self._distribution_full = self.__calculate_distribution()
         self._distribution_short = self.__calculate_distribution(600)
 
@@ -54,6 +58,16 @@ class Ticker:
         distribution.close_dist = np.histogram(self._close_data_delta[-1*sample_size:], bin_count)
 
         return distribution
+
+    def calculate_envelopes(self):
+        envelope_min = np.histogram(self._min_data_delta, 10, range=(-0.4, 0.59))
+        envelope_max = np.histogram(self._max_data_delta, 10, range=(-0.4, 0.59))
+        envelope_close = np.histogram(self._close_data_delta, 10, range=(-0.4, 0.59))
+        min = np.array([envelope_min[0][:3], envelope_min[0][4]])/self._total
+        max = np.array([envelope_max[0][3], envelope_max[0][4]])/self._total
+        close = np.array([envelope_close[0][3], envelope_close[0][4]])/self._total
+        print("")
+
 
     @staticmethod
     def _calc_probability_dist(delta, distribution):

@@ -1,12 +1,23 @@
 import numpy as np
-import timeit
+# import timeit
+from numba import guvectorize, float64, int32
 import matplotlib.pyplot as plt
 from analysis.BlackScholes.blackscholes import BlackScholes
+from time import time, time_ns
+
+
+@guvectorize([(float64[:, :], float64[:], float64, float64[:])], '(p,t),(p),() -> (t)', cache=True, nopython=True)
+def get_price_times(price_time_price_vector, prices_vector, cost_basis, result):
+    for time_i in range(price_time_price_vector.shape[1]):
+        for price_i in range(price_time_price_vector.shape[0]):
+            if price_time_price_vector[price_i][time_i] > cost_basis:
+                result[time_i] = prices_vector[price_i]
+                break
 
 
 class Optionleg:
     def __init__(self, K, type, tte, cb):
-        self.cost_basis = cb
+        self.cost_basis = cb * 100.0
         self.is_closed = False
         self.K = K
         self.type = type
@@ -59,6 +70,25 @@ class IronCondor:
         self.short_call = Optionleg(c1, 'c', tte, cb_c1)
         self.long_call = Optionleg(c2, 'c', tte, cb_c2)
 
+    def calculate_domain(self, curr_S, rf_rate, stdiv):
+        self.long_put.calculate_domain(curr_S, rf_rate, stdiv)
+        self.short_put.calculate_domain(curr_S, rf_rate, stdiv)
+        self.short_call.calculate_domain(curr_S, rf_rate, stdiv)
+        self.long_call.calculate_domain(curr_S, rf_rate, stdiv)
+
+    def get_breakevens(self):
+        price = self.long_put.price - self.short_put.price + self.long_call.price - self.short_call.price
+        delta = self.long_put.delta - self.short_put.delta + self.long_call.delta - self.short_call.delta
+        gamma = self.long_put.gamma - self.short_put.gamma + self.long_call.gamma - self.short_call.gamma
+        theta = self.long_put.theta - self.short_put.theta + self.long_call.theta - self.short_call.theta
+
+        start = time()
+        f = get_price_times(self.long_call.state_space[:, :, 0, 3, 0], self.long_call.underlying_price_domain[1:], self.long_call.cost_basis)
+
+        print(f"Time taken -> {time() - start}")
+        y = 9
+
+# np.argwhere(self.long_call.state_space[:,:,0,3,0]>self.long_call.cost_basis)
 
 S = 108.38
 K = 100
@@ -66,14 +96,15 @@ stdiv1 = 0.38
 stdiv2 = 0.375
 times = 89
 rates2 = 0.03015
-start = timeit.default_timer()
 leg = Optionleg(130, 'c', 89, 1.0)
-leg.calculate_domain(108.38, 0.03015, 0.35)
-leg.get_price_timeline()
+start = time()
+# leg.calculate_domain(108.38, 0.03015, 0.35)
+# leg.get_price_timeline()
 
+option_data1 = BlackScholes.get_greeks_call(S, K, times, rates2, stdiv1)
 option_data1 = BlackScholes.get_greeks_put(S, K, times, rates2, stdiv1)
 # option_data2 = BlackScholes.get_greeks_call(S, K, times, rates, stdiv2)
-print(f'time -> {(timeit.default_timer() - start) * 1000}')
+print(f'time -> {time() - start}')
 print(option_data1[0, 0, 0, 0])
 
 # plt.plot(times, option_data1[:,:,:,:, -1], color='r')

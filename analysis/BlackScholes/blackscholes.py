@@ -1,4 +1,4 @@
-from numba import vectorize, float64, guvectorize
+from numba import vectorize, float64, guvectorize, prange
 from math import  sqrt, exp
 import numpy as np
 from utils.helpers import normal_dist, black_scholes_d1, black_scholes_d2, pdf
@@ -6,14 +6,14 @@ from utils.helpers import normal_dist, black_scholes_d1, black_scholes_d2, pdf
 
 class BlackScholes:
     @staticmethod
-    @guvectorize([(float64[:], float64[:], float64, float64[:], float64[:], float64[:], float64[:, :, :, :, :])], '(m),(s),(),(t),(r),(v)->(s,t,r,v,m)', target='parallel')
+    @guvectorize([(float64[:], float64[:], float64, float64[:], float64[:], float64[:], float64[:, :, :, :, :])], '(m),(s),(),(t),(r),(v)->(s,t,r,v,m)', target='parallel', fastmath=True, cache=True)
     def _get_greeks_call(g_types, S, K, tte, rates, stdiv, result):
-        for r in range(rates.shape[0]):
-            for t in range(tte.shape[0]):
+        for r in prange(rates.shape[0]):
+            for t in prange(tte.shape[0]):
                 np_sqrt_t = sqrt(tte[t])
                 exp_ert = exp(-1*rates[r]*tte[t])
-                for s in range(S.shape[0]):
-                    for v in range(stdiv.shape[0]):
+                for s in prange(S.shape[0]):
+                    for v in prange(stdiv.shape[0]):
                         # intermediate steps
                         d1 = black_scholes_d1(S[s], K, tte[t], rates[r], stdiv[v])
                         d2 = black_scholes_d2(d1, tte[t], stdiv[v])
@@ -34,14 +34,14 @@ class BlackScholes:
                         result[s][t][r][v][3] = theta * 100.0
 
     @staticmethod
-    @guvectorize([(float64[:], float64[:], float64, float64[:], float64[:], float64[:], float64[:, :, :, :, :])], '(m),(s),(),(t),(r),(v)->(s,t,r,v,m)', target='parallel')
+    @guvectorize([(float64[:], float64[:], float64, float64[:], float64[:], float64[:], float64[:, :, :, :, :])], '(m),(s),(),(t),(r),(v)->(s,t,r,v,m)', target='parallel', fastmath=True)
     def _get_greeks_put(g_types, S, K, tte, rates, stdiv, result):
-        for r in range(rates.shape[0]):
-            for t in range(tte.shape[0]):
+        for r in prange(rates.shape[0]):
+            for t in prange(tte.shape[0]):
                 np_sqrt_t = sqrt(tte[t])
                 exp_ert = exp(-1*rates[r]*tte[t])
-                for s in range(S.shape[0]):
-                    for v in range(stdiv.shape[0]):
+                for s in prange(S.shape[0]):
+                    for v in prange(stdiv.shape[0]):
                         # intermediate steps
                         d1 = black_scholes_d1(S[s], K, tte[t], rates[r], stdiv[v])
                         d2 = black_scholes_d2(d1, tte[t], stdiv[v])
