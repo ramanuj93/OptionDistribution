@@ -34,7 +34,7 @@ class BlackScholes:
                         result[s][t][r][v][3] = theta * 100.0
 
     @staticmethod
-    @guvectorize([(float64[:], float64[:], float64, float64[:], float64[:], float64[:], float64[:, :, :, :, :])], '(m),(s),(),(t),(r),(v)->(s,t,r,v,m)', target='parallel', fastmath=True)
+    @guvectorize([(float64[:], float64[:], float64, float64[:], float64[:], float64[:], float64[:, :, :, :, :])], '(m),(s),(),(t),(r),(v)->(s,t,r,v,m)', target='parallel', fastmath=True, cache=True)
     def _get_greeks_put(g_types, S, K, tte, rates, stdiv, result):
         for r in prange(rates.shape[0]):
             for t in prange(tte.shape[0]):

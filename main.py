@@ -6,7 +6,8 @@ from analysis.options import IronCondor
 from analysis.ticker import Ticker
 from ibkrInit import IbkrApp
 import numpy as np
-
+from numba import prange
+import time
 
 from matplotlib import pyplot
 
@@ -91,18 +92,24 @@ if __name__ == '__main__':
     # get30daydance("AAPL")
     # print(uniq)
     # datas = get30daydelta("GOOG")
-    ticker_data = readStock("AMZN")
-    price_info = ticker_data[-3000:, 4]
+    ticker_data = readStock("GOOG")
+    start = time.time()
+    price_info = ticker_data[-6000:, 4]
+    avg = []
+    for i in range(10):
+        hts = Ticker(price_info, 30)
+        long_x = hts.calc_probability(-0.05)
+        avg.append(long_x.low)
+        # print(long_x.close)
+    print(f"Average -> {np.average(avg)}")
+    print(f"Elapsed -> {time.time() - start}")
 
-    icondor = IronCondor(115.0, 123.0, 125.0, 133.0, 4.22, 7.14, 7.86, 4.43, 53)
-    icondor.calculate_domain(121.14, 0.03, 0.42)
-    icondor.get_breakevens()
 
-    # hts = Ticker(price_info, 20)
+    # icondor = IronCondor(115.0, 123.0, 125.0, 133.0, 4.22, 7.14, 7.86, 4.43, 53)
+    # icondor.calculate_domain(121.14, 0.03, 0.42)
+    # icondor.get_breakevens()
 
-    # fff = hts.calculate_envelopes()
-    # long_x, near_x = hts.calc_probability(0.05)
-    # print(long_x.high)
+
     #
     # datas_close = [long_x.close, near_x.close]
     # datas_high = [long_x.high, near_x.high]
